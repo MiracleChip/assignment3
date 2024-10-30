@@ -1,6 +1,5 @@
-# ASICassignment3
+# ASIC Assignment3: RTL Design of an Elevator Controller (FSM)
 
-RTL Design of an Elevator Controller
 The objectives of this homework are:
 RTL implementation of an elevator controller
 Validation of the design using self-checking testbenches and simulation
