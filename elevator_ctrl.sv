@@ -1,32 +1,31 @@
-`include "defines.sv"
+module elevator_ctrl #(
 
-module elevator_ctrl(
+parameter  NUM_FLOORS = 10 ,                  // Number of floors
+parameter  FLOOR_BITS = $clog2(NUM_FLOORS)
+)(
+   
 
     input logic clk,
-    input logic rst,
-    input logic [`NUM_FLOORS-1:0] upreq,
-    input logic [`NUM_FLOORS-1:0] downreq,
-    //input logic up_button,
-    //input logic down_button,
-    //input logic open_req,
-    output logic open_move,
-    output logic down_move,
-    output logic up_move,
-    output logic [`FLOOR_BITS-1:0] floor,
+    input logic resetN,
+    input logic [NUM_FLOORS-1:0] upreq,
+    input logic [NUM_FLOORS-1:0] downreq,
     output logic [6:0] A
 
 );
-
-logic [`FLOOR_BITS-1:0] req;
+logic [FLOOR_BITS-1:0] floor;
+logic [FLOOR_BITS-1:0] req;
+logic open_move;
+logic down_move;
+logic up_move;
 
 reqres request_resolver (
     .clk(clk),
-    .rst(rst),
+    .rst(resetN),
     .upreq(upreq),
     .downreq(downreq),
     .up(up_move),
     .down(down_move),
-    .open(up_move),
+    .open(open_move),
     .req(req)
 
 );
@@ -34,7 +33,7 @@ reqres request_resolver (
 ctrl_unit CU ( 
     .req(req),
     .clk(clk),
-    .resetN(rst),
+    .resetN(resetN),
     .up(up_move),
     .down(down_move),
     .open(open_move),
@@ -47,6 +46,9 @@ ssd dut(
     .BCD(floor),
     .A(A)
 );
+
+
+
 
 
 endmodule
