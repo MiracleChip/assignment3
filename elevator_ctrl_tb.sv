@@ -1,18 +1,25 @@
-`include "defines.sv"
 module elevator_ctrl_tb();
 
+parameter  NUM_FLOORS = 10 ;                   // Number of floors
+parameter  FLOOR_BITS = $clog2(NUM_FLOORS);
+
+
 logic clk;
-logic rst;
-logic [`NUM_FLOORS-1:0] upreq;
-logic [`NUM_FLOORS-1:0] downreq;
-logic open_move;
-logic down_move;
-logic up_move;
-logic [`FLOOR_BITS-1:0] floor;
+logic resetN;
+logic [NUM_FLOORS-1:0] upreq;
+logic [NUM_FLOORS-1:0] downreq;
 logic [6:0] A;
 
 localparam CLOCK_PERIOD = 20;
 localparam int COUNTER_FINAL=50;
+
+elevator_ctrl ctrl(
+    .clk(clk),
+    .resetN(resetN),
+    .upreq(upreq),
+    .downreq(downreq),
+    .A(A)
+);
 
 
 task DisplayHeader;
@@ -23,9 +30,9 @@ endtask
 
 initial begin
     clk = 0;
-    #1000;
     forever #(CLOCK_PERIOD/2) clk = ~clk; // 20ns period, 50MHz clock
 end
+
 
 initial begin
     $display("\n |||||| T O P ||||||");
@@ -34,14 +41,14 @@ initial begin
     // AssertresetN;
 
     clk = 0;
-    rst = 0;
+    resetN = 0;
     upreq = 'b0;
     downreq ='b0;
 
     // Reset sequence
-    #5 rst = 1;
-    #50 rst = 0; // Assert reset for a short duration
-    #50 rst = 1;
+    #5 resetN = 1;
+    #50 resetN = 0; // Assert reset for a short duration
+    #50 resetN = 1;
 
     #(CLOCK_PERIOD*COUNTER_FINAL);
     // Test case 1: Set an upward request at floor 3, and move up
@@ -49,9 +56,11 @@ initial begin
     //up_button = 1; // Elevator starts moving up
     #(CLOCK_PERIOD*COUNTER_FINAL*8); // Wait some time
     //up_button = 0;
-    upreq[3] = 0;
+    upreq[4] = 1;
 
-    #(CLOCK_PERIOD*COUNTER_FINAL);    
+    #(CLOCK_PERIOD*COUNTER_FINAL);   
+
+    $stop; 
 
 end
 
