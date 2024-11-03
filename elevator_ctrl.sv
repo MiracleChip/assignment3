@@ -20,7 +20,7 @@ logic up_move;
 
 reqres request_resolver (
     .clk(clk),
-    .rst(resetN),
+    .resetN(resetN),
     .upreq(upreq),
     .downreq(downreq),
     .up(up_move),
