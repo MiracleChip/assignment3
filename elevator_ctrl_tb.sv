@@ -50,15 +50,20 @@ initial begin
     #50 resetN = 0; // Assert reset for a short duration
     #50 resetN = 1;
 
-    #(CLOCK_PERIOD*COUNTER_FINAL);
+    #(CLOCK_PERIOD*COUNTER_FINAL*4);
     // Test case 1: Set an upward request at floor 3, and move up
-    upreq[3] = 1; // Request to go up from floor 3
+    upreq[1] = 1; // Request to go up from floor 3
     //up_button = 1; // Elevator starts moving up
-    #(CLOCK_PERIOD*COUNTER_FINAL*8); // Wait some time
-    //up_button = 0;
+    #(CLOCK_PERIOD*COUNTER_FINAL*8);
     upreq[4] = 1;
+     // Wait some time
+    //up_button = 0;
+    
 
-    #(CLOCK_PERIOD*COUNTER_FINAL);   
+    ///#(CLOCK_PERIOD*COUNTER_FINAL*8);  
+    //upreq[3] = 0; 
+    //upreq[4] = 0;
+    #100;
 
     $stop; 
 
