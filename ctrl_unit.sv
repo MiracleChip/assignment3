@@ -23,7 +23,7 @@ localparam int COUNTER_FINAL=50;
 
 logic [31:0] counter;
 logic [1:0] timer;
-logic en, open_move, flag;
+logic en;
 
 //define states -- 
 typedef enum logic [1:0]{
@@ -104,21 +104,21 @@ always_comb begin
         close_state: begin // close
             if ((current_floor)  < target_floor) begin
                 next_state = up_state;
-                open_move=0;
-                flag=0;
+                // open_move=0;
+                // flag=0;
                 //req_ack=1;
                 //val=1;
             end 
             else if ((current_floor)  > target_floor) begin
                 next_state = down_state;
-                open_move=0;
-                flag=0;
+                // open_move=0;
+                // flag=0;
                 //req_ack=1;
             end 
-            else if ((current_floor == floor && flag==1)) begin
-                next_state = open_state;
-                flag=0;
-            end 
+            // else if ((current_floor == floor && flag==1)) begin
+            //     next_state = open_state;
+            //     flag=0;
+            // end 
         end
 
         open_state: begin // open 
@@ -126,7 +126,7 @@ always_comb begin
 
                // if((current_floor)  == target_floor) begin
                     next_state=close_state;
-                    open_move=0;
+                    // open_move=0;
                     //flag=0;
                     //req_ack =0;
                     //val=req_ack;
@@ -139,8 +139,8 @@ always_comb begin
             //if(timer == 1 && counter == COUNTER_FINAL - 1) begin
                 if ((current_floor) == target_floor) begin
                     next_state = open_state;
-                    open_move=1;
-                    flag=1;
+                    // open_move=1;
+                    // flag=1;
                     //req_ack =1;
                 end
         end
@@ -149,16 +149,16 @@ always_comb begin
            //if(timer==2) begin
                 if ((current_floor)  == target_floor) begin
                     next_state = open_state;
-                    open_move=1;
-                    flag=1;
+                    // open_move=1;
+                    // flag=1;
                     //req_ack =1;
                 end
         end
 
         default:  begin
             next_state = close_state;
-            open_move=0;
-            flag=0;
+            // open_move=0;
+            // flag=0;
             //req_ack=0;
         end
     endcase
