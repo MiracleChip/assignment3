@@ -1,150 +1,111 @@
 
 module reqres  #(
 
-parameter  NUM_FLOORS = 10 ,                  // Number of floors
+parameter  NUM_FLOORS =  10,                  // Number of floors
 parameter  FLOOR_BITS = $clog2(NUM_FLOORS)
 )
 (
-    input wire clk,
-    input wire rst,
+    input logic clk,
+    input logic resetN,
 
-    input wire [NUM_FLOORS-1:0] upreq,
-    input wire [NUM_FLOORS-1:0] downreq,
-    input wire up,
-    input wire down,
-    input wire open,
-    output reg [FLOOR_BITS-1:0] req
+    input logic [NUM_FLOORS-1:0] upreq,
+    input logic [NUM_FLOORS-1:0] downreq,
+    input logic up,
+    input logic down,
+    input logic open,
+    output logic [FLOOR_BITS-1:0] req
 );
 
-    reg [FLOOR_BITS-1:0] curr;
-    reg [FLOOR_BITS-1:0] uptarget;
-    reg [FLOOR_BITS-1:0] downtarget;
-    reg [31:0] timer;
-    integer i;
-    parameter DEBOUNCE_CYCLES = 5;
+logic [FLOOR_BITS-1:0] initial_floor;
+// logic [FLOOR_BITS-1:0] current;
+integer i;
 
-    //reg [NUM_FLOORS-1:0] served_mask;
+logic flag;
 
-    localparam int COUNTER_FINAL=50;
-    // reg [NUM_FLOORS-1:0] upreq_internal; 
-    // reg [NUM_FLOORS-1:0] downreq_internal; 
+typedef enum logic[1:0] { 
+    IDLE_state=2'b00,
+    MOVEUP_state=2'b10,
+    MOVEDOWN_state=2'b01
+    // WAIT_state=2'b11
+ } state;
 
-    // reg [NUM_FLOORS-1:0] prev_upreq; 
-    // reg [NUM_FLOORS-1:0] prev_downreq; 
+state current_state, next_state;
 
-    // reg [NUM_FLOORS-1:0] upreq_internal_debounced;
-    // reg [NUM_FLOORS-1:0] downreq_internal_debounced;
-    // reg [FLOOR_BITS-1:0] upreq_internal_debounced_counter;
-    // reg [FLOOR_BITS-1:0] downreq_internal_debounced_counter;
+logic [FLOOR_BITS-1:0] next_req;
+logic newreq;
 
-    //wire [NUM_FLOORS-1:0] served_mask = ~(1 << curr);
+// logic [NUM_FLOORS-1:0] upreq_wire;
+// logic [NUM_FLOORS-1:0] downreq_wire;
 
-    // wire [NUM_FLOORS-1:0] upreq_masked = upreq & ~served_mask;
-    // wire [NUM_FLOORS-1:0] downreq_masked = downreq & ~served_mask;
-/*always @(posedge clk or negedge rst) begin
-    if(!rst) begin
-        prev_upreq<=0;
-        prev_downreq<=0;
+always_ff@(posedge clk or resetN) begin
+    if(!resetN) begin
+        current_state<=IDLE_state;
+        req<=0;
+        // upreq_wire<=0;
+        // downreq_wire<=0;
     end
-    else begin 
-        upreq_internal <= upreq ^ prev_upreq;
-        downreq_internal <= downreq ^ prev_downreq;
-        prev_upreq <= upreq;
-        prev_downreq <= downreq;
+    else begin
+        current_state<=next_state;
+        // downreq_wire<=downreq;
+        //if(current_state==MOVEUP_state ||current_state==MOVEDOWN_state) begin
+           req<=next_req; 
+        //end
     end
-end*/
-    always @(*) 
-    begin
-        uptarget = NUM_FLOORS;
-        downtarget = NUM_FLOORS;
-        // upreq_internal <= upreq ^ prev_upreq;
-        // downreq_internal <= downreq ^ prev_downreq;
-        
-        // Find highest up request
-        for (i = NUM_FLOORS-1; i >= 0; i = i - 1) 
-        begin
-            if (upreq[i]&&i) 
-            begin
-                uptarget = i;
+end
+    
+always_comb begin
+    next_state=current_state;
+    flag=0;
+    initial_floor=0;
+    next_req=initial_floor;
+    i=0;
+    newreq=0;
+    if(newreq==1 || newreq==0) begin
+        case(current_state) 
+            IDLE_state: begin
+                if(initial_floor==0) begin
+                    next_state=MOVEUP_state;
+                end 
             end
-        end
-        
-        // Find lowest down request
-        for (i = 0; i <= NUM_FLOORS-1; i = i + 1) 
-        begin
-            if (downreq[i] &&i) 
-            begin
-                downtarget = i;
-            end
-        end
-        
-        // Generate request output
-        if (down && downtarget != NUM_FLOORS) 
-        begin
-            req = downtarget;
-            //served_mask = (1 << downtarget);
-        end 
-        else if (up && uptarget != NUM_FLOORS) 
-        begin
-            req = uptarget;
-            //served_mask = (1 << uptarget);
-        end 
-        else 
-        begin
-            if (uptarget < NUM_FLOORS)
-            begin
-                req = uptarget;
-            end 
-            else if (downtarget < NUM_FLOORS) 
-            begin
-                req = downtarget;
-            end 
-            else 
-            begin
-                req = curr;
-            end
-        end
-    end
 
-    always @(posedge clk or negedge rst) begin
-        if (!rst) begin
-            curr <= 'd0;
-            timer <= 'd0;
-            // prev_upreq<=0;
-            // prev_downreq<=0;
-            // upreq_internal_debounced <= 0;
-            // downreq_internal_debounced <= 0;
-            // upreq_internal_debounced_counter <= 0;
-            // downreq_internal_debounced_counter <= 0;
-            // upreq_internal <= upreq;      
-            // downreq_internal <= downreq;
-        end else begin
-            timer <= timer + 1;
-            if (timer == COUNTER_FINAL - 1) 
-            begin
-                if (up) begin
-                    curr <= curr + 1;
-                    timer <= 0;
-                end else if (down) begin
-                    curr <= curr - 1;
-                    timer <= 0;
+            MOVEUP_state: begin
+                for(i=0; i<NUM_FLOORS; i++) begin
+                    if(upreq[i]==1) begin
+                        next_req=i;
+                        next_state=MOVEUP_state;
+                        // flag=1;
+                    end
+                    if(i==NUM_FLOORS-1 && upreq[i]==0) begin
+                            next_state=MOVEDOWN_state;
+                    end
+                    else begin 
+                            next_state=MOVEUP_state;
+                    end
+                    end
                 end
-                // upreq_internal <= upreq_internal & served_mask;
-                // downreq_internal <= downreq_internal & served_mask;
-            end else if (open) 
-            begin
-                timer <= 0;
-            end
-            // prev_upreq <= upreq;
-            // prev_downreq <= downreq;
 
-            // if (upreq_internal !== upreq_internal_debounced) begin
-            //     upreq_internal_debounced_counter <= 0;
-            // end else if (upreq_internal_debounced_counter < DEBOUNCE_CYCLES - 1) begin
-            //     upreq_internal_debounced_counter <= upreq_internal_debounced_counter + 1;
-            // end else begin
-            //     upreq_internal_debounced <= upreq_internal;
-            // end
-        end
+            MOVEDOWN_state: begin
+                for(i=NUM_FLOORS; i>=0; i--) begin
+                    if(downreq[i]==1) begin
+                        next_req=i;
+                        next_state=MOVEDOWN_state;
+                        // flag=1;
+                    end
+
+                    if(i==0 && downreq[i]==0) begin
+                        next_state=IDLE_state;
+                        newreq=1;
+                    end
+                    end
+                end
+
+        endcase
     end
+
+end
+
+
+
+    
+    
 endmodule
